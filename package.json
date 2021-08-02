@@ -1,0 +1,41 @@
+{
+  "name": "bulk-import-client",
+  "version": "1.0.0",
+  "description": "CLI Client app for Bulk Data Import",
+  "main": "index.js",
+  "engines": {
+    "node": ">=15"
+  },
+  "scripts": {
+    "test": "nodemon -e '.ts' -w src -w test -x 'lab --sourcemaps --transform node_modules/lab-transform-typescript'",
+    "build": "tsc",
+    "build:watch": "node_modules/.bin/tsc -p ./tsconfig.json --alwaysStrict false --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smart-on-fhir/bulk-import-client.git"
+  },
+  "keywords": ["Bulk Data", "FHIR", "import", "SMART", "SMART Backend Services", "OAuth"],
+  "author": "Vladimir Ignatov <vlad.ignatov@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/smart-on-fhir/bulk-import-client/issues"
+  },
+  "homepage": "https://github.com/smart-on-fhir/bulk-import-client#readme",
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/fhir": "^0.0.34",
+    "@types/jsonwebtoken": "^8.5.4",
+    "@types/node": "^16.3.3",
+    "@types/node-jose": "^1.1.8",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "commander": "^8.0.0",
+    "got": "^11.8.2",
+    "jsonwebtoken": "^8.5.1",
+    "node-jose": "^2.0.0",
+    "ts-dotenv": "^0.8.3"
+  }
+}
