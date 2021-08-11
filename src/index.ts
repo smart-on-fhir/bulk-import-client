@@ -1,6 +1,6 @@
-import commander, { Command } from "commander"
-import { inspect } from "util"
-import { Client } from "./client"
+import commander, { Command }                  from "commander"
+import { inspect }                             from "util"
+import { Client }                              from "./client"
 import { progressBar, parseImportResult, ask } from "./lib"
 
 

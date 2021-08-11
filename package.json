@@ -2,10 +2,13 @@
   "name": "bulk-import-client",
   "version": "1.0.0",
   "description": "CLI Client app for Bulk Data Import",
-  "main": "index.js",
   "engines": {
     "node": ">=15"
   },
+  "bin": {
+    "bdi": "./build/index.js"
+  },
+  "main": "./build/index.js",
   "scripts": {
     "test": "nodemon -e '.ts' -w src -w test -x 'lab --sourcemaps --transform node_modules/lab-transform-typescript'",
     "build": "tsc",
