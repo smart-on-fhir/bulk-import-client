@@ -28,10 +28,10 @@ See comments in the config file for further instructions.
 ## Usage
 The basic usage is (from within the project folder):
 ```sh
-node . -e 'https://bulk-data-server/$export'
+node . -e 'https://bulk-data.smarthealthit.org/fhir/$export'
 ```
 This tells the (pre-configured) Data Consumer server to start a dynamic import
-from the bulk data server at "https://bulk-data-server/$export".
+from the bulk data server at "https://bulk-data.smarthealthit.org/fhir/$export".
 
 For more options run:
 ```sh

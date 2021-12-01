@@ -2,23 +2,37 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.asArray = exports.errorFromOperationOutcome = exports.errorFromResponse = exports.parseImportResult = exports.ask = exports.progressBar = exports.wait = void 0;
+exports.asArray = exports.errorFromOperationOutcome = exports.errorFromResponse = exports.parseImportResult = exports.ask = exports.progressBar = exports.wait = exports.AbortError = void 0;
 require("colors");
 const source_1 = __importDefault(require("got/dist/source"));
 const CustomError_1 = require("./CustomError");
 const NDJSONStream_1 = require("./NDJSONStream");
+class AbortError extends Error {
+    constructor(message = "Operation aborted") {
+        super(message);
+    }
+}
+exports.AbortError = AbortError;
 /**
  * Simple utility for waiting. Returns a promise that will resolve after @ms
  * milliseconds.
  */
 function wait(ms, signal) {
     return new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, ms);
-        if (signal) {
-            signal.addEventListener("abort", () => {
+        const timer = setTimeout(() => {
+            if (signal) {
+                signal.removeEventListener("abort", abort);
+            }
+            resolve(true);
+        }, ms);
+        function abort() {
+            if (timer) {
                 clearTimeout(timer);
-                reject(new Error("Waiting aborted"));
-            }, { once: true });
+            }
+            reject(new AbortError("Waiting aborted"));
+        }
+        if (signal) {
+            signal.addEventListener("abort", abort);
         }
     });
 }

@@ -19,6 +19,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = __importStar(require("commander"));
+const source_1 = require("got/dist/source");
 const util_1 = require("util");
 const client_1 = require("./client");
 const lib_1 = require("./lib");
@@ -44,8 +45,14 @@ app.action(async (args) => {
     const client = new client_1.Client(verbose);
     client.on("error", e => {
         console.log("");
-        console.log("Error", util_1.inspect(e, { colors: true }));
+        if (e instanceof lib_1.AbortError || e instanceof source_1.CancelError) {
+            console.log(e.message);
+        }
+        else {
+            console.log("Error", util_1.inspect(e, { colors: true }));
+        }
     });
+    client.on("abort", console.log);
     client.once("kickOffStart", () => {
         process.stdout.write("\r\033[2KKickOff request started");
     });
@@ -57,12 +64,16 @@ app.action(async (args) => {
     });
     client.once("importComplete", async (res) => {
         const result = await lib_1.parseImportResult(res.body);
-        if (result.fatal.length + result.error.length + result.warning.length + result.information.length > 0) {
+        const fatal = result.fatal.length;
+        const error = result.error.length;
+        const warning = result.warning.length;
+        const information = result.information.length;
+        if (fatal + error + warning + information) {
             process.stdout.write("\r\033[2KImport completed with the following outcomes:\n" +
-                "      fatal: ".red.bold + result.fatal.length + "\n" +
-                "      error: ".red + result.error.length + "\n" +
-                "    warning: ".yellow + result.warning.length + "\n" +
-                "information: ".cyan + result.information.length + "\n\n");
+                "      fatal: ".red.bold + fatal + "\n" +
+                "      error: ".red + error + "\n" +
+                "    warning: ".yellow + warning + "\n" +
+                "information: ".cyan + information + "\n\n");
             const answer = await lib_1.ask("Do you want to see more details (y/n)?");
             process.stdout.write("\r\033[2K");
             if (answer.toLowerCase() === "y") {
@@ -82,7 +93,7 @@ app.action(async (args) => {
         }
         process.exit(0);
     });
-    await client.kickOff({
+    const job = client.kickOff({
         exportUrl,
         importType,
         patient,
@@ -91,6 +102,13 @@ app.action(async (args) => {
         _elements: elements,
         _outputFormat: format,
     });
+    process.on("SIGINT", () => {
+        console.log("");
+        client.cancel().then(() => {
+            process.exit(0);
+        });
+    });
+    await job;
 });
 async function main() {
     await app.parseAsync(process.argv);
