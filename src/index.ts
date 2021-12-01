@@ -1,7 +1,13 @@
-import commander, { Command }                  from "commander"
-import { inspect }                             from "util"
-import { Client }                              from "./client"
-import { progressBar, parseImportResult, ask } from "./lib"
+import commander, { Command } from "commander"
+import { CancelError }        from "got/dist/source"
+import { inspect }            from "util"
+import { Client }             from "./client"
+import {
+    progressBar,
+    parseImportResult,
+    ask,
+    AbortError
+} from "./lib"
 
 
 const app = new Command()
@@ -49,28 +55,41 @@ app.action(async (args) => {
 
     client.on("error", e => {
         console.log("")
-        console.log("Error", inspect(e, { colors: true }))
+        if (e instanceof AbortError || e instanceof CancelError) {
+            console.log(e.message)
+        } else {
+            console.log("Error", inspect(e, { colors: true }))
+        }
     })
+
+    client.on("abort", console.log)
+
     client.once("kickOffStart", () => {
         process.stdout.write("\r\033[2KKickOff request started")
     })
+
     client.once("kickOffComplete", () => {
         process.stdout.write("\r\033[2KKickOff request completed")
     })
+
     client.on("progress", ({ value, message }) => {
         process.stdout.write(progressBar(value) + ` ${message}`)
     })
+
     client.once("importComplete", async (res) => {
-        const result = await parseImportResult(res.body)
+        const result      = await parseImportResult(res.body)
+        const fatal       = result.fatal.length
+        const error       = result.error.length
+        const warning     = result.warning.length
+        const information = result.information.length
         
-        if (result.fatal.length + result.error.length + result.warning.length + result.information.length > 0) {
-            
+        if (fatal + error + warning + information) {
             process.stdout.write(
                 "\r\033[2KImport completed with the following outcomes:\n" +
-                "      fatal: ".red.bold + result.fatal.length + "\n" +
-                "      error: ".red      + result.error.length + "\n" +
-                "    warning: ".yellow   + result.warning.length + "\n" +
-                "information: ".cyan     + result.information.length + "\n\n"
+                "      fatal: ".red.bold + fatal       + "\n" +
+                "      error: ".red      + error       + "\n" +
+                "    warning: ".yellow   + warning     + "\n" +
+                "information: ".cyan     + information + "\n\n"
             )
 
             const answer = await ask("Do you want to see more details (y/n)?");
@@ -93,7 +112,7 @@ app.action(async (args) => {
         process.exit(0);
     })
 
-    await client.kickOff({
+    const job = client.kickOff({
         exportUrl,
         importType,
         patient,
@@ -102,6 +121,15 @@ app.action(async (args) => {
         _elements    : elements,
         _outputFormat: format,
     })
+
+    process.on("SIGINT", () => {
+        console.log("");
+        client.cancel().then(() => {
+            process.exit(0)
+        })
+    });
+
+    await job;
 })
 
 async function main() {

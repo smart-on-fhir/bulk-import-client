@@ -4,6 +4,12 @@ import { ImportClient } from "..";
 import { CustomError } from "./CustomError";
 import { NDJSONStream } from "./NDJSONStream";
 
+export class AbortError extends Error {
+    constructor(message = "Operation aborted") {
+        super(message)
+    }
+}
+
 /**
  * Simple utility for waiting. Returns a promise that will resolve after @ms
  * milliseconds.
@@ -11,12 +17,22 @@ import { NDJSONStream } from "./NDJSONStream";
 export function wait(ms: number, signal?: AbortSignal)
 {
     return new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, ms)
-        if (signal) {
-            signal.addEventListener("abort", () => {
+        const timer = setTimeout(() => {
+            if (signal) {
+                signal.removeEventListener("abort", abort);
+            }
+            resolve(true)
+        }, ms);
+
+        function abort() {
+            if (timer) {
                 clearTimeout(timer);
-                reject(new Error("Waiting aborted"))
-            }, { once: true });
+            }
+            reject(new AbortError("Waiting aborted"))
+        }
+
+        if (signal) {
+            signal.addEventListener("abort", abort);
         }
     });
 }
