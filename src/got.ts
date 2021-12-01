@@ -5,9 +5,10 @@ export default got.extend({
     hooks: {
         beforeRequest: [
             options => {
+                options.headers["user-agent"] = "Bulk Import Client <https://github.com/smart-on-fhir/bulk-import-client>"
                 if (options.context.verbose) {
                     console.log(`\n-----------------------------------------------------`)
-                    console.log(`Request: ${options.method} ${options.url}`)
+                    console.log("Request: " + `${options.method} ${options.url}`.bold)
                     console.log(`Headers:`, options.headers)
 
                     const payload = options.body || options.form || options.json
@@ -20,6 +21,7 @@ export default got.extend({
         afterResponse: [
             response => {
                 if (response.request.options.context.verbose) {
+                    console.log(`Response Status:`, response.statusCode, response.statusMessage)
                     console.log(`Response Headers:`, response.headers)
                     if (response.body) {
                         console.log(`Response:`, response.body)
